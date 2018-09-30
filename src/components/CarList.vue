@@ -27,8 +27,8 @@
                     <input type="number" placeholder="添加本月SIM卡" v-model='simAdd'/>
                     <span class='show-state' @click='addSimCard()'>添加</span>
                 </div>
-                <div>本月SIM卡消耗:<span>{{simUsed}}</span></div>
                 <div>本月SIM卡添加:<span>{{simAdded}}</span></div>
+                <div class='sim-update'>本月SIM卡消耗:<input type="number" placeholder="添加本月SIM卡" v-model='simUsed' @input="changeUse()"/></div>
                 <div>SIM卡总余量:<span>{{simTotalRest}}</span></div>
             </div>
             <div class='load-file'>
@@ -189,6 +189,21 @@ export default {
         }
     },
     methods:{
+        //修改消耗
+        changeUse(){
+            var date = new Date();
+            this.$http.post('http://lgkj.chuangkegf.com/velnote/simadmin.php',
+            {kind:'changeuse',year:date.getFullYear(),month:date.getMonth()+1,used:this.simUsed},{emulateJSON:true}).then((res)=>{
+                var data = res.body;
+                if(data.code == 200){
+                    this.currSimUse();
+                }else if(data.code == 400){
+                    this.simUsed = 0;
+                }
+            },(err)=>{
+                console.log(err);
+            }) 
+        },
         setGroup(){
             var currData = []; //子数组用来存分割完的数据
             //循环需要处理的数组

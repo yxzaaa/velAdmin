@@ -288,7 +288,7 @@
     justify-content: flex-start;
 }
 .sim-box>div{
-    width:140px;
+    width:150px;
     font-size: 12px;
     line-height: 50px;
     color:#666;
@@ -391,4 +391,12 @@
 }
 .month-info>p{
     padding:5px 0px;
+}
+.sim-update input{
+    width:50px;
+    line-height: 28px;
+    border:1px solid #aaa;
+    height:28px;
+    padding-left:3px;
+    margin-left:3px;
 }
