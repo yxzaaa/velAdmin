@@ -138,6 +138,7 @@ export default {
             comList:[],
             velMsg:[],
             vehLoad:[[]],
+            groupLoadData:[],
             monthList:[],
             groupId:1,
             currCom:'',
@@ -154,7 +155,8 @@ export default {
             simTotalRest:0,
             monthShow:false,
             showInfo:false,
-            listDown:false
+            listDown:false,
+            loadingIndex:0
         }
     },
     mounted(){
@@ -187,6 +189,20 @@ export default {
         }
     },
     methods:{
+        setGroup(){
+            var currData = []; //子数组用来存分割完的数据
+            //循环需要处理的数组
+            for(var i = 0; i < this.vehLoad.length; i++) {
+                //将chartArr[i]添加到子数组
+                currData.push(this.vehLoad[i]);
+                if((i != 0 && (i + 1) % 100 == 0) || i == this.vehLoad.length - 1) {
+                    //把currData加到allData里
+                    this.groupLoadData.push(currData);
+                    //在这里清空currData
+                    currData = [];
+                }
+            };
+        },
         removeCom(index){
             if(confirm('删除户主：'+this.comList[index].bname+'?')){
                 this.$http.post('http://lgkj.chuangkegf.com/velnote/com.php',
@@ -313,9 +329,42 @@ export default {
                 this.vehLoad = [[]];
             }
         },
+        uPByGroup(){
+            this.$http.post('http://lgkj.chuangkegf.com/velnote/upload.php',
+            {
+                comName:this.currCom,
+                belongId:this.currComIndex,
+                postdata:this.groupLoadData[this.loadingIndex],
+                kind:'insertVehs'
+            },{emulateJSON:true}).then((res)=>{
+                if(res.body.code == 200 && this.loadingIndex == this.groupLoadData.length -1){
+                    alert('导入完成');
+                    if(parseInt(res.body.msg)>0){
+                        this.useSimCard(res.body.msg);
+                    }
+                    this.$http.post('http://lgkj.chuangkegf.com/velnote/com.php',
+                    {kind:'selectAll'},{emulateJSON:true}).then((res)=>{
+                        this.comList = res.body;
+                        this.changeCom(this.comList.length - 1);
+                    },(err)=>{
+                        console.log(err);
+                    })
+                    this.formDown = false;
+                    this.comName = '';
+                    this.vehLoad = [[]];
+                    this.groupLoadData = [];
+                    this.loadingIndex = 0;
+                }else if(res.body.code == 200){
+                    this.loadingIndex ++;
+                    this.uPByGroup();
+                }
+            },(err)=>{
+                console.log(err);
+            }) 
+        },
         upLoadFiles(){
             var that = this;
-            console.log(that.vehLoad);
+            that.setGroup();
             if(that.comName != '' && that.vehLoad[0].length == 8){
                 // 新建户主
                 that.$http.post('http://lgkj.chuangkegf.com/velnote/upload.php',
@@ -331,63 +380,9 @@ export default {
                             kind:'selectId'
                         },{emulateJSON:true}).then((res)=>{
                             if(res.body.code == 200){
-                                // 上传该户主车辆信息
-                                var belongId = res.body.msg[0];
-                                if(that.vehLoad.length <= 100){
-                                    that.$http.post('http://lgkj.chuangkegf.com/velnote/upload.php',
-                                    {
-                                        comName:that.comName,
-                                        belongId:belongId,
-                                        postdata:that.vehLoad,
-                                        kind:'insertVehs'
-                                    },{emulateJSON:true}).then((res)=>{
-                                        if(res.body.code == 200){
-                                            alert('新增了'+res.body.msg+'条记录');
-                                            if(parseInt(res.body.msg)>0){
-                                                that.useSimCard(res.body.msg);
-                                            }
-                                            that.$http.post('http://lgkj.chuangkegf.com/velnote/com.php',
-                                            {kind:'selectAll'},{emulateJSON:true}).then((res)=>{
-                                                that.comList = res.body;
-                                                that.changeCom(that.comList.length - 1);
-                                            },(err)=>{
-                                                console.log(err);
-                                            })
-                                            that.formDown = false;
-                                            that.comName = '';
-                                            that.vehLoad = [[]];
-                                        }
-                                    },(err)=>{
-                                        console.log(err);
-                                    })
-                                }
-                                that.$http.post('http://lgkj.chuangkegf.com/velnote/upload.php',
-                                {
-                                    comName:that.comName,
-                                    belongId:res.body.msg[0],
-                                    postdata:that.vehLoad,
-                                    kind:'insertVehs'
-                                },{emulateJSON:true}).then((res)=>{
-                                    if(res.body.code == 200){
-                                        alert('新增了'+res.body.msg+'条记录');
-                                        if(parseInt(res.body.msg)>0){
-                                            that.useSimCard(res.body.msg);
-                                        }
-                                        that.$http.post('http://lgkj.chuangkegf.com/velnote/com.php',
-                                        {kind:'selectAll'},{emulateJSON:true}).then((res)=>{
-                                            that.comList = res.body;
-                                            that.changeCom(that.comList.length - 1);
-                                        },(err)=>{
-                                            console.log(err);
-                                        })
-                                        that.formDown = false;
-                                        that.comName = '';
-                                        that.vehLoad = [[]];
-                                    }
-                                },(err)=>{
-                                    console.log(err);
-                                })
-                                //
+                                that.currComIndex = res.body.msg[0];
+                                that.currCom = that.comName;
+                                that.uPByGroup();
                             }
                         },(err)=>{
                             console.log(err);
@@ -397,33 +392,7 @@ export default {
                     console.log(err);
                 })
             }else if(that.comName == '' && that.vehLoad[0].length == 8 && that.currCom != ''){
-                that.$http.post('http://lgkj.chuangkegf.com/velnote/upload.php',
-                {
-                    comName:that.currCom,
-                    belongId:that.currComIndex,
-                    postdata:that.vehLoad,
-                    kind:'insertVehs'
-                },{emulateJSON:true}).then((res)=>{
-                    console.log(res);
-                    if(res.body.code == 200){
-                        alert('新增了'+res.body.msg+'条记录');
-                        if(parseInt(res.body.msg)>0){
-                            that.useSimCard(res.body.msg);
-                        }
-                        that.$http.post('http://lgkj.chuangkegf.com/velnote/com.php',
-                        {kind:'selectAll'},{emulateJSON:true}).then((res)=>{
-                            that.comList = res.body;
-                            that.changeCom(that.currComId);
-                            that.lastPage();
-                        },(err)=>{
-                            console.log(err);
-                        })
-                        that.formDown = false;
-                        that.vehLoad = [[]];
-                    }
-                },(err)=>{
-                    console.log(err);
-                })
+                that.uPByGroup();
             }
         },
         loadFile(){
