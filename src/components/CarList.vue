@@ -53,13 +53,13 @@
                         <input type="email" class="form-control" id="exampleInputEmail1" placeholder="新增，请输入公司/户主名" v-model="comName">
                     </div>
                     <ul>
-                        <li>车牌号<input type="text" v-model="vehLoad[0][0]"></li>
-                        <li>安装时间<input type="date" v-model="vehLoad[0][1]"></li>
-                        <li>安装人员<input type="text" v-model="vehLoad[0][2]"></li>
-                        <li>联系人<input type="text" v-model="vehLoad[0][3]"></li>
-                        <li>联系电话<input type="text" v-model="vehLoad[0][4]"></li>
-                        <li>期价<input type="text" v-model="vehLoad[0][5]"></li>
-                        <li>应缴费<input type="number" v-model="vehLoad[0][6]"></li>
+                        <li>车牌号<input type="text" value="" v-model="vehLoad[0][0]"></li>
+                        <li>安装时间<input type="date" value="" v-model="vehLoad[0][1]"></li>
+                        <li>安装人员<input type="text" value="" v-model="vehLoad[0][2]"></li>
+                        <li>联系人<input type="text" value="" v-model="vehLoad[0][3]"></li>
+                        <li>联系电话<input type="text" value="" v-model="vehLoad[0][4]"></li>
+                        <li>期价<input type="text" value="" v-model="vehLoad[0][5]"></li>
+                        <li>应缴费<input type="number" value="" v-model="vehLoad[0][6]"></li>
                         <li>缴费状态
                             <select v-model="vehLoad[0][7]">
                                 <option value="1">已缴</option>
@@ -94,7 +94,7 @@
                 <div class='list-item'>
                     <ul>
                         <li v-for='(item,index) in velMsg' :key='index'>
-                            <span style='width:10%'>{{item.vnum}}</span>
+                            <span style='width:10%' class='change-spay'><input type="text" @input='changeVnum(index,item.vnum)' v-model="item.vnum"></span>
                             <span style='width:10%'>{{item.insdate}}</span>
                             <span style='width:10%'>{{item.insper}}</span>
                             <span style='width:10%'>{{item.conper}}</span>
@@ -518,6 +518,10 @@ export default {
             this.velMsg[index].spay = spay;
             this.updateVeh(index);
         },
+        changeVnum(index,vnum){
+            this.velMsg[index].vnum = vnum;
+            this.updateVeh(index);
+        },
         updateVeh(index){
             this.$http.post('http://lgkj.chuangkegf.com/velnote/veh.php',
             {
@@ -526,7 +530,8 @@ export default {
                 spay:this.velMsg[index].spay,
                 paystate:this.velMsg[index].paystate,
                 islate:this.velMsg[index].islate,
-                vid:this.velMsg[index].vid
+                vid:this.velMsg[index].vid,
+                vnum:this.velMsg[index].vnum
             },{emulateJSON:true}).then((res)=>{
             },(err)=>{
                 this.changePage();
