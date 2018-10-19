@@ -71,7 +71,7 @@ export default {
     mounted(){
         this.$http.get('http://lgkj.chuangkegf.com/check.php').then((res)=>{
             if(res.body.code == 400){
-                this.$router.replace('/login');
+                //this.$router.replace('/login');
             }else if(res.body.code == 200){
                 if(!sessionStorage.getItem('login')){
                     sessionStorage.setItem('login',true);
