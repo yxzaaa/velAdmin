@@ -58,15 +58,16 @@
                         <li>安装人员<input type="text" v-model="vehLoad[0][2]"></li>
                         <li>联系人<input type="text" v-model="vehLoad[0][3]"></li>
                         <li>联系电话<input type="text" v-model="vehLoad[0][4]"></li>
-                        <li>应缴费<input type="number" v-model="vehLoad[0][5]"></li>
+                        <li>期价<input type="text" v-model="vehLoad[0][5]"></li>
+                        <li>应缴费<input type="number" v-model="vehLoad[0][6]"></li>
                         <li>缴费状态
-                            <select v-model="vehLoad[0][6]">
+                            <select v-model="vehLoad[0][7]">
                                 <option value="1">已缴</option>
                                 <option value="0">未缴</option>
                             </select>
                         </li>
                         <li>是否逾期
-                            <select v-model="vehLoad[0][7]">
+                            <select v-model="vehLoad[0][8]">
                                 <option value="1">是</option>
                                 <option value="0">否</option>
                             </select>
@@ -79,11 +80,12 @@
         <div class='car-box'>
             <div class='group-pointer'>
                 <ul>
-                    <li style='width:15%'>车牌号</li>
-                    <li style='width:15%'>安装时间</li>
+                    <li style='width:10%'>车牌号</li>
+                    <li style='width:10%'>安装时间</li>
                     <li style='width:10%'>安装人员</li>
                     <li style='width:10%'>联系人</li>
                     <li style='width:10%'>联系电话</li>
+                    <li style='width:10%'>期价</li>
                     <li style='width:10%'>应缴费</li>
                     <li style='width:10%'>缴费状态</li>
                     <li style='width:10%'>是否逾期</li>
@@ -92,11 +94,12 @@
                 <div class='list-item'>
                     <ul>
                         <li v-for='(item,index) in velMsg' :key='index'>
-                            <span style='width:15%'>{{item.vnum}}</span>
-                            <span style='width:15%'>{{item.insdate}}</span>
+                            <span style='width:10%'>{{item.vnum}}</span>
+                            <span style='width:10%'>{{item.insdate}}</span>
                             <span style='width:10%'>{{item.insper}}</span>
                             <span style='width:10%'>{{item.conper}}</span>
                             <span style='width:10%'>{{item.comphone}}</span>
+                            <span style='width:10%'>{{item.price}}</span>
                             <span style='width:10%' class='change-spay'>￥ <input type="text" @input='changePay(index,item.spay)' v-model="item.spay"></span>
                             <span style='width:10%' :class="['toggle-item',{'payes':item.paystate==1},{'payno':item.paystate==0}]" @click='togglePayState(index)'>{{item.paystate}}</span>
                             <span style='width:10%' :class="['toggle-item',{'lateyes':item.islate==1},{'lateno':item.islate==0}]" @click='toggleLateState(index)'>{{item.islate}}</span>
@@ -197,6 +200,7 @@ export default {
                 var data = res.body;
                 if(data.code == 200){
                     this.currSimUse();
+                    this.totalSimRest();
                 }else if(data.code == 400){
                     this.simUsed = 0;
                 }
@@ -345,6 +349,7 @@ export default {
             }
         },
         uPByGroup(){
+            console.log(this.groupLoadData[this.loadingIndex]);
             this.$http.post('http://lgkj.chuangkegf.com/velnote/upload.php',
             {
                 comName:this.currCom,
@@ -352,6 +357,7 @@ export default {
                 postdata:this.groupLoadData[this.loadingIndex],
                 kind:'insertVehs'
             },{emulateJSON:true}).then((res)=>{
+                console.log(res);
                 if(res.body.code == 200 && this.loadingIndex == this.groupLoadData.length -1){
                     alert('导入完成');
                     if(parseInt(res.body.msg)>0){
@@ -380,7 +386,7 @@ export default {
         upLoadFiles(){
             var that = this;
             that.setGroup();
-            if(that.comName != '' && that.vehLoad[0].length == 8){
+            if(that.comName != '' && that.vehLoad[0].length == 9){
                 // 新建户主
                 that.$http.post('http://lgkj.chuangkegf.com/velnote/upload.php',
                 {
@@ -406,7 +412,7 @@ export default {
                 },(err)=>{
                     console.log(err);
                 })
-            }else if(that.comName == '' && that.vehLoad[0].length == 8 && that.currCom != ''){
+            }else if(that.comName == '' && that.vehLoad[0].length == 9 && that.currCom != ''){
                 that.uPByGroup();
             }
         },
@@ -431,7 +437,7 @@ export default {
                 for(var i=0;i<list.length;i++){
                     itemData.push(list[i].w);
                     count++;
-                    if(count >7){
+                    if(count >8){
                     count = 0;
                     vehData.push(itemData);
                     itemData = [];
@@ -440,15 +446,15 @@ export default {
                 vehData = vehData.slice(1);
                 for(var i=0;i<vehData.length;i++){
                     var date = vehData[i][1];
-                    if(vehData[i][6] == '已缴' || vehData[i][6] == '是' || vehData[i][6] == '已交'){
-                        vehData[i][6] = 1;
-                    }else if(vehData[i][6] == '未缴' || vehData[i][6] == '否' || vehData[i][6] == '未交'){
-                        vehData[i][6] = 0;
-                    };
-                    if(vehData[i][7] == '是' || vehData[i][7] == '逾期'){
+                    if(vehData[i][7] == '已缴' || vehData[i][6] == '是' || vehData[i][6] == '已交'){
                         vehData[i][7] = 1;
-                    }else if(vehData[i][7] == '否' || vehData[i][7] == '未逾期'){
+                    }else if(vehData[i][7] == '未缴' || vehData[i][6] == '否' || vehData[i][6] == '未交'){
                         vehData[i][7] = 0;
+                    };
+                    if(vehData[i][8] == '是' || vehData[i][7] == '逾期'){
+                        vehData[i][8] = 1;
+                    }else if(vehData[i][8] == '否' || vehData[i][7] == '未逾期'){
+                        vehData[i][8] = 0;
                     };
                     var dateArray = date.split('/');
                     vehData[i][1] = '20'+dateArray[2]+'-'+dateArray[0]+'-'+dateArray[1];
